@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AuditChain — Admin Panel</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; display: flex; height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px; background: #1a1a2e; color: #fff;
+    display: flex; flex-direction: column; padding: 0; flex-shrink: 0;
+  }
+  .sidebar-brand {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid #2d2d4e;
+  }
+  .sidebar-brand .logo {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .sidebar-brand .logo-icon {
+    width: 36px; height: 36px; background: #00b4d8;
+    border-radius: 8px; display: flex; align-items: center;
+    justify-content: center; font-weight: bold; font-size: 14px;
+  }
+  .sidebar-brand .logo-text { font-size: 16px; font-weight: 700; }
+  .sidebar-brand .logo-sub { font-size: 10px; color: #888; margin-top: 2px; }
+  .sidebar-nav { padding: 16px 0; flex: 1; }
+  .nav-label { font-size: 10px; color: #666; padding: 8px 20px 4px; text-transform: uppercase; letter-spacing: 1px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px; cursor: pointer; color: #aaa;
+    font-size: 14px; transition: all 0.2s; position: relative;
+  }
+  .nav-item:hover { background: #2d2d4e; color: #fff; }
+  .nav-item.active { background: #2d2d4e; color: #00b4d8; }
+  .nav-item .badge {
+    margin-left: auto; background: #00b4d8; color: #fff;
+    font-size: 11px; padding: 2px 7px; border-radius: 10px;
+  }
+
+  /* MAIN */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar {
+    background: #fff; padding: 0 28px; height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid #e8ecf0; flex-shrink: 0;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-title { font-size: 18px; font-weight: 600; color: #1a1a2e; }
+  .topbar-sub { font-size: 13px; color: #888; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .btn-new {
+    background: #00b4d8; color: #fff; border: none;
+    padding: 8px 18px; border-radius: 8px; cursor: pointer;
+    font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-new:hover { background: #0096c7; }
+  .search-box {
+    padding: 7px 14px; border: 1px solid #e0e0e0; border-radius: 8px;
+    font-size: 13px; outline: none; width: 220px;
+  }
+
+  /* CONTENT */
+  .content { flex: 1; overflow-y: auto; padding: 28px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* PAGE HEADER */
+  .page-header { margin-bottom: 24px; }
+  .page-header h1 { font-size: 26px; font-weight: 700; color: #1a1a2e; }
+  .page-header p { color: #888; font-size: 14px; margin-top: 4px; }
+
+  /* STATS */
+  .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: #fff; border-radius: 12px; padding: 20px;
+    border: 1px solid #e8ecf0;
+  }
+  .stat-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 32px; font-weight: 700; margin: 6px 0 2px; color: #1a1a2e; }
+  .stat-value.green { color: #2db85a; }
+  .stat-value.blue { color: #00b4d8; }
+  .stat-sub { font-size: 12px; color: #aaa; }
+
+  /* TABLE CARD */
+  .table-card { background: #fff; border-radius: 12px; border: 1px solid #e8ecf0; overflow: hidden; }
+  .table-card-header {
+    padding: 16px 20px; display: flex; justify-content: space-between;
+    align-items: center; border-bottom: 1px solid #f0f0f0;
+  }
+  .table-card-header span { font-size: 13px; font-weight: 600; color: #555; }
+  .table-card-header .count { font-size: 12px; color: #aaa; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; padding: 12px 20px; font-size: 11px;
+    color: #888; text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 1px solid #f0f0f0; background: #fafafa;
+  }
+  td { padding: 14px 20px; font-size: 13px; color: #333; border-bottom: 1px solid #f7f7f7; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafafa; }
+  .td-name { font-weight: 600; color: #1a1a2e; }
+  .td-email { color: #666; font-size: 12px; }
+
+  /* BADGES */
+  .badge-status {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
+  }
+  .badge-status::before { content: '•'; font-size: 14px; }
+  .badge-activo { background: #e6f9ef; color: #2db85a; }
+  .badge-activo::before { color: #2db85a; }
+  .badge-inactivo { background: #f5f5f5; color: #aaa; }
+  .badge-inactivo::before { color: #aaa; }
+  .badge-pendiente { background: #fff8e6; color: #f0a500; }
+  .badge-pendiente::before { color: #f0a500; }
+  .badge-completada { background: #e6f9ef; color: #2db85a; }
+  .badge-completada::before { color: #2db85a; }
+  .badge-con_observaciones { background: #ffeaea; color: #e05252; }
+  .badge-con_observaciones::before { color: #e05252; }
+
+  /* PUNTAJE PILL */
+  .puntaje-pill {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: 700;
+  }
+  .puntaje-high { background: #e6f9ef; color: #2db85a; }
+  .puntaje-mid { background: #fff8e6; color: #f0a500; }
+  .puntaje-low { background: #ffeaea; color: #e05252; }
+
+  /* ACTIONS */
+  .actions { display: flex; gap: 6px; }
+  .btn-action {
+    padding: 5px 10px; border-radius: 6px; border: 1px solid #e0e0e0;
+    cursor: pointer; font-size: 12px; background: #fff; color: #555;
+  }
+  .btn-action:hover { background: #f0f0f0; }
+  .btn-action.danger { color: #e05252; border-color: #ffd0d0; }
+  .btn-action.danger:hover { background: #fff0f0; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); z-index: 1000;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 16px; padding: 28px;
+    width: 480px; max-width: 95vw; max-height: 90vh; overflow-y: auto;
+  }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .modal-header h2 { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+  .btn-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #888; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 10px 14px; border: 1px solid #e0e0e0;
+    border-radius: 8px; font-size: 14px; outline: none; transition: border 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #00b4d8; }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+  .btn-cancel { padding: 9px 18px; border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer; background: #fff; font-size: 13px; }
+  .btn-submit { padding: 9px 18px; background: #00b4d8; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; }
+  .btn-submit:hover { background: #0096c7; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    background: #1a1a2e; color: #fff; padding: 12px 20px;
+    border-radius: 10px; font-size: 13px; transform: translateY(100px);
+    transition: transform 0.3s; opacity: 0;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-left: 4px solid #2db85a; }
+  .toast.error { border-left: 4px solid #e05252; }
+
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo">
+      <div class="logo-icon">AC</div>
+      <div>
+        <div class="logo-text">AuditChain</div>
+        <div class="logo-sub">ADMIN PANEL</div>
+      </div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item active" onclick="showPage('sucursales')">
+      🏬 Sucursales <span class="badge" id="badge-sucursales">0</span>
+    </div>
+    <div class="nav-item" onclick="showPage('auditores')">
+      👤 Auditores <span class="badge" id="badge-auditores">0</span>
+    </div>
+    <div class="nav-item" onclick="showPage('auditorias')">
+      📋 Auditorías <span class="badge" id="badge-auditorias">0</span>
+    </div>
+    <div class="nav-label">Sistema</div>
+    <div class="nav-item" onclick="showPage('usuarios')">
+      ⚙️ Usuarios <span class="badge" id="badge-usuarios">0</span>
+    </div>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <div>
+        <div class="topbar-title" id="topbar-title">Sucursales</div>
+        <div class="topbar-sub" id="topbar-sub">Gestión de locales comerciales</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <input class="search-box" type="text" placeholder="🔍 Buscar..." oninput="buscar(this.value)">
+      <button class="btn-new" onclick="abrirModal()">+ Nuevo</button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- SUCURSALES -->
+    <div class="page active" id="page-sucursales">
+      <div class="page-header">
+        <h1>Sucursales</h1>
+        <p>Locales comerciales registrados en el sistema</p>
+      </div>
+      <div class="stats" id="stats-sucursales"></div>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span>REGISTROS</span>
+          <span class="count" id="count-sucursales">0 registros</span>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Nombre</th><th>Región</th><th>Dirección</th>
+            <th>Estado</th><th>Puntaje</th><th>Acciones</th>
+          </tr></thead>
+          <tbody id="tbody-sucursales"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- AUDITORES -->
+    <div class="page" id="page-auditores">
+      <div class="page-header">
+        <h1>Auditores</h1>
+        <p>Equipo de terreno autorizado para crear reportes</p>
+      </div>
+      <div class="stats" id="stats-auditores"></div>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span>REGISTROS</span>
+          <span class="count" id="count-auditores">0 registros</span>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Nombre</th><th>Email</th><th>Región</th><th>Estado</th><th>Acciones</th>
+          </tr></thead>
+          <tbody id="tbody-auditores"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- AUDITORIAS -->
+    <div class="page" id="page-auditorias">
+      <div class="page-header">
+        <h1>Auditorías</h1>
+        <p>Historial de visitas e inspecciones registradas</p>
+      </div>
+      <div class="stats" id="stats-auditorias"></div>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span>REGISTROS</span>
+          <span class="count" id="count-auditorias">0 registros</span>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Sucursal</th><th>Auditor</th><th>Fecha</th>
+            <th>Puntaje</th><th>Estado</th><th>Notas</th><th>Acciones</th>
+          </tr></thead>
+          <tbody id="tbody-auditorias"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- USUARIOS -->
+    <div class="page" id="page-usuarios">
+      <div class="page-header">
+        <h1>Usuarios</h1>
+        <p>Cuentas de acceso al sistema</p>
+      </div>
+      <div class="stats" id="stats-usuarios"></div>
+      <div class="table-card">
+        <div class="table-card-header">
+          <span>REGISTROS</span>
+          <span class="count" id="count-usuarios">0 registros</span>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th>
+          </tr></thead>
+          <tbody id="tbody-usuarios"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-overlay" onclick="cerrarModalOverlay(event)">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:8003/api';
+let paginaActual = 'sucursales';
+let datosCache = { sucursales: [], auditores: [], auditorias: [], usuarios: [] };
+let editandoId = null;
+
+// ── NAVEGACIÓN ────────────────────────────────────────────────────────────────
+function showPage(page) {
+  paginaActual = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  event.currentTarget.classList.add('active');
+  const info = {
+    sucursales: ['Sucursales', 'Gestión de locales comerciales'],
+    auditores: ['Auditores', 'Equipo de terreno autorizado'],
+    auditorias: ['Auditorías', 'Historial de visitas e inspecciones'],
+    usuarios: ['Usuarios', 'Cuentas de acceso al sistema']
+  };
+  document.getElementById('topbar-title').textContent = info[page][0];
+  document.getElementById('topbar-sub').textContent = info[page][1];
+  cargarDatos(page);
+}
+
+// ── API CALLS ─────────────────────────────────────────────────────────────────
+async function fetchData(endpoint) {
+  try {
+    const res = await fetch(API + endpoint);
+    if (!res.ok) throw new Error('Error ' + res.status);
+    return await res.json();
+  } catch (e) {
+    showToast('Error al conectar con la API: ' + e.message, 'error');
+    return [];
+  }
+}
+
+async function postData(endpoint, data) {
+  const res = await fetch(API + endpoint, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || 'Error al crear');
+  }
+  return await res.json();
+}
+
+async function putData(endpoint, data) {
+  const res = await fetch(API + endpoint, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || 'Error al actualizar');
+  }
+  return await res.json();
+}
+
+async function deleteData(endpoint) {
+  const res = await fetch(API + endpoint, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Error al eliminar');
+}
+
+// ── CARGAR DATOS ──────────────────────────────────────────────────────────────
+async function cargarDatos(page) {
+  const data = await fetchData('/' + page + '/');
+  datosCache[page] = data;
+  renderTabla(page, data);
+  renderStats(page, data);
+  document.getElementById('badge-' + page).textContent = data.length;
+}
+
+async function cargarTodo() {
+  for (const page of ['sucursales', 'auditores', 'auditorias', 'usuarios']) {
+    const data = await fetchData('/' + page + '/');
+    datosCache[page] = data;
+    document.getElementById('badge-' + page).textContent = data.length;
+  }
+  renderTabla('sucursales', datosCache.sucursales);
+  renderStats('sucursales', datosCache.sucursales);
+}
+
+// ── RENDER TABLAS ─────────────────────────────────────────────────────────────
+function puntajePill(p) {
+  const cls = p >= 80 ? 'puntaje-high' : p >= 60 ? 'puntaje-mid' : 'puntaje-low';
+  return `<span class="puntaje-pill ${cls}">${p}%</span>`;
+}
+
+function estadoBadge(estado) {
+  return `<span class="badge-status badge-${estado}">${estado.replace('_', ' ')}</span>`;
+}
+
+function renderTabla(page, datos) {
+  const tbody = document.getElementById('tbody-' + page);
+  document.getElementById('count-' + page).textContent = datos.length + ' registros';
+  if (!datos.length) { tbody.innerHTML = '<tr><td colspan="10" class="empty">No hay registros aún</td></tr>'; return; }
+
+  if (page === 'sucursales') {
+    tbody.innerHTML = datos.map(s => `
+      <tr>
+        <td class="td-name">${s.nombre}</td>
+        <td>${s.region}</td>
+        <td>${s.direccion || '—'}</td>
+        <td>${estadoBadge(s.estado)}</td>
+        <td>${puntajePill(s.puntaje_promedio)}</td>
+        <td><div class="actions">
+          <button class="btn-action" onclick="editarRegistro('sucursales','${s.id}')">✏️</button>
+          <button class="btn-action danger" onclick="eliminarRegistro('sucursales','${s.id}')">🗑️</button>
+        </div></td>
+      </tr>`).join('');
+  }
+
+  if (page === 'auditores') {
+    tbody.innerHTML = datos.map(a => `
+      <tr>
+        <td class="td-name">${a.nombre}</td>
+        <td class="td-email">${a.email}</td>
+        <td>${a.region || '—'}</td>
+        <td>${estadoBadge(a.estado)}</td>
+        <td><div class="actions">
+          <button class="btn-action" onclick="editarRegistro('auditores','${a.id}')">✏️</button>
+          <button class="btn-action danger" onclick="eliminarRegistro('auditores','${a.id}')">🗑️</button>
+        </div></td>
+      </tr>`).join('');
+  }
+
+  if (page === 'auditorias') {
+    tbody.innerHTML = datos.map(a => {
+      const suc = datosCache.sucursales.find(s => s.id === a.sucursal_id);
+      const aud = datosCache.auditores.find(au => au.id === a.auditor_id);
+      return `<tr>
+        <td class="td-name">${suc ? suc.nombre : a.sucursal_id.slice(0,8)}</td>
+        <td>${aud ? aud.nombre : a.auditor_id.slice(0,8)}</td>
+        <td>${a.fecha}</td>
+        <td>${puntajePill(a.puntaje)}</td>
+        <td>${estadoBadge(a.estado)}</td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.notas || '—'}</td>
+        <td><div class="actions">
+          <button class="btn-action" onclick="editarRegistro('auditorias','${a.id}')">✏️</button>
+          <button class="btn-action danger" onclick="eliminarRegistro('auditorias','${a.id}')">🗑️</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  if (page === 'usuarios') {
+    tbody.innerHTML = datos.map(u => `
+      <tr>
+        <td class="td-name">${u.nombre}</td>
+        <td class="td-email">${u.email}</td>
+        <td><span class="badge-status badge-${u.activo ? 'activo' : 'inactivo'}">${u.rol}</span></td>
+        <td>${estadoBadge(u.activo ? 'activo' : 'inactivo')}</td>
+        <td><div class="actions">
+          <button class="btn-action" onclick="editarRegistro('usuarios','${u.id}')">✏️</button>
+          <button class="btn-action danger" onclick="eliminarRegistro('usuarios','${u.id}')">🗑️</button>
+        </div></td>
+      </tr>`).join('');
+  }
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────────
+function renderStats(page, datos) {
+  const el = document.getElementById('stats-' + page);
+  if (page === 'sucursales') {
+    const activas = datos.filter(s => s.estado === 'activo').length;
+    const prom = datos.length ? (datos.reduce((a, s) => a + Number(s.puntaje_promedio), 0) / datos.length).toFixed(0) : 0;
+    el.innerHTML = `
+      <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value">${datos.length}</div><div class="stat-sub">sucursales registradas</div></div>
+      <div class="stat-card"><div class="stat-label">Activas</div><div class="stat-value green">${activas}</div><div class="stat-sub">operativas</div></div>
+      <div class="stat-card"><div class="stat-label">Puntaje Prom.</div><div class="stat-value blue">${prom}%</div><div class="stat-sub">cumplimiento promedio</div></div>`;
+  }
+  if (page === 'auditores') {
+    const activos = datos.filter(a => a.estado === 'activo').length;
+    const regiones = [...new Set(datos.map(a => a.region).filter(Boolean))].length;
+    el.innerHTML = `
+      <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value">${datos.length}</div><div class="stat-sub">auditores en sistema</div></div>
+      <div class="stat-card"><div class="stat-label">Activos</div><div class="stat-value green">${activos}</div><div class="stat-sub">con acceso habilitado</div></div>
+      <div class="stat-card"><div class="stat-label">Regiones</div><div class="stat-value blue">${regiones}</div><div class="stat-sub">zonas cubiertas</div></div>`;
+  }
+  if (page === 'auditorias') {
+    const completadas = datos.filter(a => a.estado === 'completada').length;
+    const observaciones = datos.filter(a => a.estado === 'con_observaciones').length;
+    const prom = datos.length ? (datos.reduce((a, au) => a + au.puntaje, 0) / datos.length).toFixed(0) : 0;
+    el.innerHTML = `
+      <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value">${datos.length}</div><div class="stat-sub">auditorías registradas</div></div>
+      <div class="stat-card"><div class="stat-label">Completadas</div><div class="stat-value green">${completadas}</div><div class="stat-sub">sin observaciones</div></div>
+      <div class="stat-card"><div class="stat-label">Con Observ.</div><div class="stat-value">${observaciones}</div><div class="stat-sub">requieren seguimiento</div></div>
+      <div class="stat-card"><div class="stat-label">Puntaje Prom.</div><div class="stat-value blue">${prom}%</div><div class="stat-sub">todas las visitas</div></div>`;
+  }
+  if (page === 'usuarios') {
+    const activos = datos.filter(u => u.activo).length;
+    const admins = datos.filter(u => u.rol === 'admin').length;
+    el.innerHTML = `
+      <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value">${datos.length}</div><div class="stat-sub">usuarios registrados</div></div>
+      <div class="stat-card"><div class="stat-label">Activos</div><div class="stat-value green">${activos}</div><div class="stat-sub">con acceso</div></div>
+      <div class="stat-card"><div class="stat-label">Admins</div><div class="stat-value blue">${admins}</div><div class="stat-sub">con permisos totales</div></div>`;
+  }
+}
+
+// ── MODALES ───────────────────────────────────────────────────────────────────
+function abrirModal(registro = null) {
+  editandoId = registro ? registro.id : null;
+  const modal = document.getElementById('modal-content');
+  const titulo = (editandoId ? 'Editar' : 'Nueva') + ' ' + {
+    sucursales: 'Sucursal', auditores: 'Auditor',
+    auditorias: 'Auditoría', usuarios: 'Usuario'
+  }[paginaActual];
+  modal.innerHTML = getFormHTML(paginaActual, registro);
+  modal.querySelector('h2').textContent = titulo;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function getFormHTML(page, data = {}) {
+  const v = data || {};
+  if (page === 'sucursales') return `
+    <div class="modal-header"><h2></h2><button class="btn-close" onclick="cerrarModal()">✕</button></div>
+    <div class="form-group"><label>Nombre de la Sucursal *</label><input id="f-nombre" value="${v.nombre||''}" placeholder="Ej: Sucursal Santiago Centro"></div>
+    <div class="form-group"><label>Región *</label>
+    <select id="f-region">
+      ${['Región Metropolitana','Región de Valparaíso','Región del Biobío','Región de La Araucanía','Región de Los Lagos','Región de Antofagasta','Región de Atacama','Región de Coquimbo','Región del Maule','Región de O\'Higgins'].map(r => `<option ${v.region===r?'selected':''}>${r}</option>`).join('')}
+    </select></div>
+    <div class="form-group"><label>Dirección</label><input id="f-direccion" value="${v.direccion||''}" placeholder="Ej: Av. Libertador 1234"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Estado</label><select id="f-estado"><option ${v.estado==='activo'?'selected':''}>activo</option><option ${v.estado==='inactivo'?'selected':''}>inactivo</option></select></div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="cerrarModal()">Cancelar</button><button class="btn-submit" onclick="guardar()">Guardar</button></div>`;
+
+  if (page === 'auditores') return `
+    <div class="modal-header"><h2></h2><button class="btn-close" onclick="cerrarModal()">✕</button></div>
+    <div class="form-group"><label>Nombre *</label><input id="f-nombre" value="${v.nombre||''}" placeholder="Nombre completo"></div>
+    <div class="form-group"><label>Email *</label><input id="f-email" type="email" value="${v.email||''}" placeholder="correo@ejemplo.cl"></div>
+    <div class="form-group"><label>Región</label><select id="f-region">
+      <option value="">Sin región asignada</option>
+      ${['Región Metropolitana','Región de Valparaíso','Región del Biobío','Región de La Araucanía'].map(r => `<option ${v.region===r?'selected':''}>${r}</option>`).join('')}
+    </select></div>
+    <div class="form-group"><label>Estado</label><select id="f-estado"><option ${v.estado==='activo'?'selected':''}>activo</option><option ${v.estado==='inactivo'?'selected':''}>inactivo</option></select></div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="cerrarModal()">Cancelar</button><button class="btn-submit" onclick="guardar()">Guardar</button></div>`;
+
+  if (page === 'auditorias') {
+    const sucOpts = datosCache.sucursales.map(s => `<option value="${s.id}" ${v.sucursal_id===s.id?'selected':''}>${s.nombre}</option>`).join('');
+    const audOpts = datosCache.auditores.map(a => `<option value="${a.id}" ${v.auditor_id===a.id?'selected':''}>${a.nombre}</option>`).join('');
+    return `
+    <div class="modal-header"><h2></h2><button class="btn-close" onclick="cerrarModal()">✕</button></div>
+    <div class="form-group"><label>Sucursal *</label><select id="f-sucursal_id"><option value="">Seleccionar sucursal...</option>${sucOpts}</select></div>
+    <div class="form-group"><label>Auditor *</label><select id="f-auditor_id"><option value="">Seleccionar auditor...</option>${audOpts}</select></div>
+    <div class="form-row">
+      <div class="form-group"><label>Fecha *</label><input id="f-fecha" type="date" value="${v.fecha||new Date().toISOString().slice(0,10)}"></div>
+      <div class="form-group"><label>Puntaje (0-100) *</label><input id="f-puntaje" type="number" min="0" max="100" value="${v.puntaje||75}"></div>
+    </div>
+    <div class="form-group"><label>Estado</label><select id="f-estado">
+      <option ${v.estado==='pendiente'?'selected':''} value="pendiente">Pendiente</option>
+      <option ${v.estado==='completada'?'selected':''} value="completada">Completada</option>
+      <option ${v.estado==='con_observaciones'?'selected':''} value="con_observaciones">Con observaciones</option>
+    </select></div>
+    <div class="form-group"><label>Notas</label><textarea id="f-notas">${v.notas||''}</textarea></div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="cerrarModal()">Cancelar</button><button class="btn-submit" onclick="guardar()">Guardar</button></div>`;
+  }
+
+  if (page === 'usuarios') return `
+    <div class="modal-header"><h2></h2><button class="btn-close" onclick="cerrarModal()">✕</button></div>
+    <div class="form-group"><label>Nombre *</label><input id="f-nombre" value="${v.nombre||''}" placeholder="Nombre completo"></div>
+    <div class="form-group"><label>Email *</label><input id="f-email" type="email" value="${v.email||''}" placeholder="correo@ejemplo.cl"></div>
+    <div class="form-group"><label>Contraseña ${editandoId?'(dejar vacío para no cambiar)':' *'}</label><input id="f-password" type="password" placeholder="Contraseña segura"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Rol</label><select id="f-rol"><option ${v.rol==='admin'?'selected':''} value="admin">Admin</option><option ${v.rol==='supervisor'?'selected':''} value="supervisor">Supervisor</option><option ${v.rol==='auditor'||!v.rol?'selected':''} value="auditor">Auditor</option></select></div>
+      <div class="form-group"><label>Activo</label><select id="f-activo"><option value="true" ${v.activo!==false?'selected':''}>Sí</option><option value="false" ${v.activo===false?'selected':''}>No</option></select></div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="cerrarModal()">Cancelar</button><button class="btn-submit" onclick="guardar()">Guardar</button></div>`;
+}
+
+function cerrarModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  editandoId = null;
+}
+
+function cerrarModalOverlay(e) {
+  if (e.target === document.getElementById('modal-overlay')) cerrarModal();
+}
+
+// ── GUARDAR ───────────────────────────────────────────────────────────────────
+async function guardar() {
+  let data = {};
+  try {
+    if (paginaActual === 'sucursales') {
+      data = { nombre: val('nombre'), region: val('region'), direccion: val('direccion'), estado: val('estado') };
+    } else if (paginaActual === 'auditores') {
+      data = { nombre: val('nombre'), email: val('email'), region: val('region') || null, estado: val('estado') };
+    } else if (paginaActual === 'auditorias') {
+      data = { sucursal_id: val('sucursal_id'), auditor_id: val('auditor_id'), fecha: val('fecha'), puntaje: parseInt(val('puntaje')), estado: val('estado'), notas: val('notas') || null };
+    } else if (paginaActual === 'usuarios') {
+      data = { nombre: val('nombre'), email: val('email'), rol: val('rol'), activo: val('activo') === 'true' };
+      const pwd = val('password');
+      if (pwd) data.password = pwd;
+      else if (!editandoId) { showToast('La contraseña es requerida', 'error'); return; }
+    }
+
+    if (editandoId) {
+      await putData('/' + paginaActual + '/' + editandoId, data);
+      showToast('Actualizado correctamente', 'success');
+    } else {
+      await postData('/' + paginaActual + '/', data);
+      showToast('Creado correctamente', 'success');
+    }
+    cerrarModal();
+    await cargarDatos(paginaActual);
+    if (paginaActual === 'auditorias') await cargarDatos('sucursales');
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+function val(id) {
+  const el = document.getElementById('f-' + id);
+  return el ? el.value : '';
+}
+
+// ── EDITAR / ELIMINAR ─────────────────────────────────────────────────────────
+function editarRegistro(page, id) {
+  paginaActual = page;
+  const registro = datosCache[page].find(r => r.id === id);
+  if (registro) abrirModal(registro);
+}
+
+async function eliminarRegistro(page, id) {
+  if (!confirm('¿Estás seguro que deseas eliminar este registro?')) return;
+  try {
+    await deleteData('/' + page + '/' + id);
+    showToast('Eliminado correctamente', 'success');
+    await cargarDatos(page);
+    if (page === 'auditorias') await cargarDatos('sucursales');
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+// ── BUSCAR ────────────────────────────────────────────────────────────────────
+function buscar(q) {
+  const datos = datosCache[paginaActual];
+  if (!q) { renderTabla(paginaActual, datos); return; }
+  const filtrado = datos.filter(r =>
+    Object.values(r).some(v => String(v).toLowerCase().includes(q.toLowerCase()))
+  );
+  renderTabla(paginaActual, filtrado);
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = (type === 'success' ? '✅ ' : '❌ ') + msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.onload = cargarTodo;
+</script>
+</body>
+</html>
