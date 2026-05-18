@@ -117,7 +117,7 @@ Breakpoints: `< 600 px` → `BottomNavBar` (no sidebar); `≥ 600 px` → sideba
 
 `Dio` client at `lib/core/network/dio_client.dart` with interceptors for JWT Bearer,
 retry, and logging. JWT stored via `shared_preferences`.
-`API_URL` injected at build time: `--dart-define=API_URL=http://localhost:8003/api`.
+`API_URL` injected at build time: `--dart-define=API_URL=https://sum4-tall-backend-production.up.railway.app/api/v1`.
 The old static `lib/services/api_service.dart` (uses `http`) is being removed as
 features migrate to their own Dio datasources.
 

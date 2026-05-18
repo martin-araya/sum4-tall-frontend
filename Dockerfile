@@ -8,9 +8,9 @@ RUN flutter pub get
 
 COPY . .
 
-# URL relativa: nginx hace el proxy /api → backend:8000
+# URL apuntando al backend en Railway
 RUN flutter build web --release \
-    --dart-define=API_URL=/api/v1 \
+    --dart-define=API_URL=https://sum4-tall-backend-production.up.railway.app/api/v1 \
     --dart-define=FLUTTER_WEB_USE_SKIA=true
 
 # ── ETAPA 2: Servir con Nginx + Reverse Proxy ──────────────────────────────────

@@ -9,7 +9,7 @@ class ApiConstants {
 
   static const String baseUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'http://localhost:8003/api/v1',
+    defaultValue: 'https://sum4-tall-backend-production.up.railway.app/api/v1',
   );
 
   // ── Timeouts ────────────────────────────────────────────────────────────────

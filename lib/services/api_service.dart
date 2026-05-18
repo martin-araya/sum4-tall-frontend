@@ -3,10 +3,10 @@ import 'package:http/http.dart' as http;
 import '../models/models.dart';
 
 class ApiService {
-  // En Docker: backend se llama 'backend', en desarrollo local: localhost:8000
+  // Backend en Railway
   static const String baseUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'http://localhost:8003/api',
+    defaultValue: 'https://sum4-tall-backend-production.up.railway.app/api/v1',
   );
 
   // ─── SUCURSALES ─────────────────────────────────────────────────────────────
